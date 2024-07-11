@@ -4,21 +4,31 @@ from tensorflow.keras.preprocessing import image
 import numpy as np
 import os
 import tensorflow as tf
+from dotenv import load_dotenv
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
+# Load File
+load_dotenv()
+
+# Env File Status
+APP_PORT = int(os.getenv('APP_PORT', 5000))
+APP_ENV = os.getenv('APP_ENV', 'production')
+
 # Memuat data model punya renal
 model = load_model('pemandangan.h5')
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
 @app.route('/pemandangan', methods=['POST'])
 def classify_image():
     if 'image' not in request.files:
         return jsonify({"error": "No image file provided"}), 400
-    
+
     img_file = request.files['image']
     img_path = 'uploaded_image.jpg'
     img_file.save(img_path)
@@ -29,7 +39,7 @@ def classify_image():
     img_array = np.expand_dims(img_array, axis=0)
 
     # Memastikan gambar bener
-    img_array = img_array / 255.0 
+    img_array = img_array / 255.0
 
     # Mencatat Bentuk Input
     app.logger.info(f"Image shape: {img_array.shape}")
@@ -37,12 +47,19 @@ def classify_image():
     # Membuat prediksi bolo
     try:
         prediction = model.predict(img_array)
-        class_names = ['buildings', 'forest', 'glacier', 'mountain', 'sea', 'street']  # Adjust based on your model classes
+        class_names = ['buildings', 'forest', 'glacier', 'mountain',
+                       'sea', 'street']  # Adjust based on your model classes
         predicted_class = class_names[np.argmax(prediction)]
         return jsonify({"class": predicted_class})
     except Exception as e:
         app.logger.error(f"Prediction error: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    if (APP_ENV.lower() == 'production'):
+        # app.run(debug=False, host="0.0.0.0", port=APP_PORT)
+        from waitress import serve
+        serve(app, host="0.0.0.0", port=APP_PORT)
+    else:
+        app.run(debug=True, port=APP_PORT)
