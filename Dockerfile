@@ -1,5 +1,5 @@
 # Import Pyhton Base Image
-FROM python:latest
+FROM python:3.11.9
 
 # Setting Working Directory
 WORKDIR /app
@@ -11,14 +11,14 @@ COPY . .
 RUN pip install --upgrade pip
 
 # Install Dependencies
-RUN pip3 install -r /app/requirements.txt
+RUN pip install -r /app/requirements.txt
 
 # Setting ENV Variable
 ENV APP_ENV=production
-ENV APP_PORT=5000
+ENV APP_PORT=8000
 
 # Expose Port
-EXPOSE 5000
+EXPOSE 8000
 
 # Running Project
-ENTRYPOINT [ "python3", "/app/app.py" ]
+CMD [ "python3", "app.py" ]
